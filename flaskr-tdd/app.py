@@ -5,7 +5,7 @@ import json
 
 
 from flask import Flask, request, session, g, redirect, url_for, \
-    abort, render_template, flash, jsonify
+    abort, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 
 
@@ -32,13 +32,6 @@ app.config.from_object(__name__)
 db = SQLAlchemy(app)
 
 import models
-
-
-@app.route('/')
-def index():
-    """Searches the database for entries, then displays them."""
-    entries = db.session.query(models.Hosts)
-    return render_template('index.html', entries=entries)
 
 
 @app.route('/add/host', methods=['POST'])
@@ -75,9 +68,6 @@ def login():
             error = 'Invalid password'
         else:
             session['logged_in'] = True
-            flash('You were logged in')
-            return redirect(url_for('index'))
-    return render_template('login.html', error=error)
 
 
 @app.route('/logout')
