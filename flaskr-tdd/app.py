@@ -37,7 +37,7 @@ import models
 @app.route('/')
 def index():
     """Searches the database for entries, then displays them."""
-    entries = db.session.query(models.Flaskr)
+    entries = db.session.query(models.Hosts)
     return render_template('index.html', entries=entries)
 
 
@@ -46,7 +46,7 @@ def add_host():
     """Adds new host to the database."""
     if not session.get('logged_in'):
         abort(401)
-    new_entry = models.Flaskr(request.form['host_ip'], request.form['alarming'], request.form['remediation'])
+    new_entry = models.Hosts(request.form['host_ip'], request.form['alarming'], request.form['remediation'])
     db.session.add(new_entry)
     db.session.commit()
     flash('New entry was successfully posted')
@@ -94,7 +94,7 @@ def delete_entry(post_id):
     result = {'status': 0, 'message': 'Error'}
     try:
         new_id = post_id
-        db.session.query(models.Flaskr).filter_by(post_id=new_id).delete()
+        db.session.query(models.Hosts).filter_by(post_id=new_id).delete()
         db.session.commit()
         result = {'status': 1, 'message': "Post Deleted"}
         flash('The entry was deleted.')
@@ -106,7 +106,7 @@ def delete_entry(post_id):
 @app.route('/search/', methods=['GET'])
 def search():
     query = request.args.get("query")
-    entries = db.session.query(models.Flaskr)
+    entries = db.session.query(models.Hosts)
     if query:
         return render_template('search.html', entries=entries, query=query)
     return render_template('search.html')
@@ -145,8 +145,7 @@ def get_process():
 
 
 def create_db():
-    from app import db
-    from models import Flaskr
+    from models import Hosts, Process
     # create the database and the db table
     db.create_all()
 
