@@ -97,6 +97,13 @@ def get_all_processes():
 def process_count():
     return jsonify(process_counter)
 
+@app.route("/process/search", methods=["GET"])
+def search_command_entries():
+    command = request.args.get("command")
+    all_processes = Process.query.filter(Process.CommandLine==command).all()
+    result = process_schema.dump(all_processes)
+    return jsonify(result.data)
+
 if __name__ == '__main__':
     if not os.path.exists(os.path.join(basedir, 'ESXiProcesses.sqlite')):
         db.create_all()
