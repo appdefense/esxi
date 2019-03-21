@@ -9,6 +9,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'ES
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
+process_counter = {}
 
 class Process(db.Model):
 
@@ -54,26 +55,32 @@ class ProcessSchema(ma.Schema):
                   'SecurityDomain', 'Name', 'CartelGroupId', 'WorldState', 'sha256')
 
 process_schema = ProcessSchema(many=True)
-
 # endpoint to register new process
 @app.route("/process", methods=["POST"])
 def add_process():
 
     new_process = Process(
-        request.json['WorldFlags'],
-        request.json['WorldGroupId'],
-        request.json['ParentCartelId'],
-        request.json['CartelId'],
+        request.json['World Flags'],
+        request.json['World Group Id'],
+        request.json['Parent Cartel Id'],
+        request.json['Cartel Id'],
         request.json['Id'],
-        request.json['WorldType'],
-        request.json['SessionId'],
-        request.json['CommandLine'],
-        request.json['SecurityDomain'],
+        request.json['World Type'],
+        request.json['Session Id'],
+        request.json['Command Line'],
+        request.json['Security Domain'],
         request.json['Name'],
-        request.json['CartelGroupId'],
-        request.json['WorldState'],
-        request.json['sha256']
+        request.json['Cartel Group Id'],
+        request.json['World State'],
+        request.json['sha256Hash']
     )
+
+    command = request.json['Command Line']
+    
+    if process_counter.get(command):
+        process_counter[command] += 1
+    else:
+        process_counter[command] = 1
 
     db.session.add(new_process)
     db.session.commit()
@@ -85,7 +92,10 @@ def get_all_processes():
     all_processes = Process.query.all()
     result = process_schema.dump(all_processes)
     return jsonify(result.data)
-    
+
+@app.route("/process/count", methods=["GET"])
+def process_count():
+    return jsonify(process_counter)
 
 if __name__ == '__main__':
     if not os.path.exists(os.path.join(basedir, 'ESXiProcesses.sqlite')):
