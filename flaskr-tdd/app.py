@@ -1,5 +1,8 @@
 # imports
 import os
+import sqlite3
+import json
+
 
 from flask import Flask, request, session, g, redirect, url_for, \
     abort, render_template, flash, jsonify
@@ -97,15 +100,22 @@ def search():
         return render_template('search.html', entries=entries, query=query)
     return render_template('search.html')
 
-@app.route('/get/', methods=['GET'])
+@app.route('/get/inventory', methods=['GET'])
 def get():
-    query = request.args.get("query")
-    entries = db.session.query(models.Flaskr)
-    if query:
-        print 'ENTRY FOUND:', entries
-    else:
-        print 'no query'
-    return ""
+    table_name = 'hosts'
+    db_file = 'hosts.db'
+
+    conn = sqlite3.connect(db_file)
+    conn.row_factory = sqlite3.Row # This enables column access by name: row['column_name'] 
+    db = conn.cursor()
+
+    rows = db.execute("SELECT * from %s" % table_name).fetchall()
+
+    conn.commit()
+    conn.close()
+
+    return json.dumps( [dict(x) for x in rows], indent=4 ) #CREATE JSON
+
 
 def create_db():
     from app import db
