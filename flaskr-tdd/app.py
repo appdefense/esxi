@@ -13,7 +13,7 @@ from flask_sqlalchemy import SQLAlchemy
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 # configuration
-DATABASE = 'hosts.db'
+DATABASE = 'esxi.db'
 DEBUG = True
 SECRET_KEY = 'my_precious'
 USERNAME = 'admin'
@@ -41,12 +41,23 @@ def index():
     return render_template('index.html', entries=entries)
 
 
-@app.route('/add', methods=['POST'])
-def add_entry():
-    """Adds new post to the database."""
+@app.route('/add/host', methods=['POST'])
+def add_host():
+    """Adds new host to the database."""
     if not session.get('logged_in'):
         abort(401)
     new_entry = models.Flaskr(request.form['host_ip'], request.form['alarming'], request.form['remediation'])
+    db.session.add(new_entry)
+    db.session.commit()
+    flash('New entry was successfully posted')
+    return redirect(url_for('index'))
+
+@app.route('/add/process', methods=['POST'])
+def add_process():
+    """Adds new process to the database."""
+    if not session.get('logged_in'):
+        abort(401)
+    new_entry = models.Process(request.form['cli'], request.form['inbound'], request.form['outbound'], request.form['counter'])
     db.session.add(new_entry)
     db.session.commit()
     flash('New entry was successfully posted')
@@ -101,9 +112,25 @@ def search():
     return render_template('search.html')
 
 @app.route('/get/inventory', methods=['GET'])
-def get():
+def get_inventory():
     table_name = 'hosts'
-    db_file = 'hosts.db'
+    db_file = 'esxi.db'
+
+    conn = sqlite3.connect(db_file)
+    conn.row_factory = sqlite3.Row # This enables column access by name: row['column_name'] 
+    db = conn.cursor()
+
+    rows = db.execute("SELECT * from %s" % table_name).fetchall()
+
+    conn.commit()
+    conn.close()
+
+    return json.dumps( [dict(x) for x in rows], indent=4 ) #CREATE JSON
+
+@app.route('/get/process', methods=['GET'])
+def get_process():
+    table_name = 'process'
+    db_file = 'esxi.db'
 
     conn = sqlite3.connect(db_file)
     conn.row_factory = sqlite3.Row # This enables column access by name: row['column_name'] 
